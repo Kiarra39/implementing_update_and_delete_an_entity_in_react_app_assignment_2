@@ -1,15 +1,50 @@
+import { useState, useEffect } from "react";
 import ItemList from "./components/ItemList";
 
-// use the following link to get the data
-// `/doors` will give you all the doors.
-const API_URI = `https://${import.meta.env.VITE_API_URI}/doors`;
+const API_URI = `http://${import.meta.env.VITE_API_URI}/doors`;
 
 function App() {
-  // Get the existing item from the server
-  // const [items, setItems] = useState(null);
-  // pass the item to UpdateItem as a prop
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  return <ItemList />;
+  useEffect(() => {
+    fetch(API_URI)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch items");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        setError(error.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const deleteItem = (id) => {
+    fetch(`${API_URI}/${id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to delete item");
+        }
+        return response.json();
+      })
+      .then(() => {
+        setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+      })
+      .catch((error) => {
+        setError(error.message);
+      });
+  };
+
+  return <ItemList items={items} deleteItem={deleteItem} loading={loading} error={error} />;
 }
 
 export default App;
